@@ -33,8 +33,6 @@ int sample_index = 0;
 int waveCount = 0;
 
 // timers for led blink patterns
-bool pattern1 = false;
-bool pattern2 = false;
 int pattern1Interval = 250;
 int pattern2Interval = 150;
 unsigned long pattern1lastTime1 = 0;
@@ -47,7 +45,7 @@ int pattern1BlinkCount = 0;
 int pattern2BlinkCount = 0;
 String currentPattern = "None";
 
-String LED_LIST[MAX_SIZE]; // The array to hold the strings
+String LED_LIST[LED_LIST_MAX_SIZE]; // The array to hold the strings
 int LEDlistSize = 0;       // The current size of the list
 
 void setup()
@@ -244,13 +242,14 @@ void onMqttMessage(int messageSize)
 
   if (mqttClient.messageTopic() == topicWave)
   {
-    pattern1 = true;
+    addToLEDList("pattern1");
     waveCount++;
+    Serial.print("Wave Count: ");
+    Serial.println(waveCount);
   }
   else if (mqttClient.messageTopic() == topicPat)
   {
-    pattern2 = true;
-    pattern = "pattern2";
+    addToLEDList("pattern2");
   }
 
   // use the Stream interface to print the contents
@@ -262,71 +261,42 @@ void onMqttMessage(int messageSize)
   Serial.println();
 }
 
-// void LedBlink(String pattern)
-// {
-//   int blinkRate = 500;
-//   if (pattern == "pattern1")
-//   {
-//     for (int i = 0; i < 3; i++)
-//     {
-//       digitalWrite(LEDpin, HIGH);
-//       delay(blinkRate);
-//       digitalWrite(LEDpin, LOW);
-//       delay(blinkRate);
-//     }
-//   }
-
-//   else if (pattern == "pattern2")
-//   {
-//     int blinkRate = 150;
-//     for (int i = 0; i < 5; i++)
-//     {
-//       digitalWrite(LEDpin, HIGH);
-//       delay(blinkRate);
-//       digitalWrite(LEDpin, LOW);
-//       delay(blinkRate);
-//     }
-//   }
-// }
 
 void LedBlink()
 {
 
-if ()
- = processFirstInList();
-
-
-
-
-
-  if (millis() - pattern1lastTime1 > pattern1Interval)
+  if (currentPattern == "None")
   {
-    if (pattern1)
+    currentPattern = processLEDList();
+  }
+
+  if (currentPattern == "pattern1")
+  {
+    if (millis() - pattern1lastTime1 > pattern1Interval)
     {
       digitalWrite(LEDpin, !digitalRead(LEDpin));
       pattern1BlinkCount++;
       if (pattern1BlinkCount >= pattern1BlinkQty)
       {
-        pattern1 = false;
+        currentPattern = "None";
         pattern1BlinkCount = 0;
       }
+      pattern1lastTime1 = millis();
     }
-    pattern1lastTime1 = millis();
   }
-
-  if (millis() - pattern2lastTime2 > pattern2Interval)
+  else if (currentPattern == "pattern2")
   {
-    if (pattern2)
+    if (millis() - pattern2lastTime2 > pattern2Interval)
     {
       digitalWrite(LEDpin, !digitalRead(LEDpin));
       pattern2BlinkCount++;
       if (pattern2BlinkCount >= pattern2BlinkQty)
       {
-        pattern2 = false;
+        currentPattern = "None";
         pattern2BlinkCount = 0;
       }
+      pattern2lastTime2 = millis();
     }
-    pattern2lastTime2 = millis();
   }
 }
 
@@ -409,14 +379,12 @@ void debugPatterns(String Trigger, bool matched)
   Serial.println("******************************************************************************************************");
 }
 
-
-
 void addToLEDList(String pattern)
 {
   if (LEDlistSize < LED_LIST_MAX_SIZE)
   {
-    list[LEDlistSize] = pattern;
-    listSize++;
+    LED_LIST[LEDlistSize] = pattern;
+    LEDlistSize++;
   }
   else
   {
@@ -424,18 +392,18 @@ void addToLEDList(String pattern)
   }
 }
 
-String processFirstInList()
+String processLEDList()
 {
   if (LEDlistSize > 0)
   {
-    String pattern = list[0]; 
-
+    String pattern = LED_LIST[0];
+    
     for (int i = 1; i < LEDlistSize; i++)
     {
-      list[i - 1] = list[i];
+      LED_LIST[i - 1] = LED_LIST[i];
     }
 
-    listSize--;
+    LEDlistSize--;
     return pattern;
   }
   else
