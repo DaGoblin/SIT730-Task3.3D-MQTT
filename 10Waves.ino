@@ -1,6 +1,6 @@
 void waveCheck()
 {
-    if (waveCount == 10)
+    if (waveCount >= 10)
     {
         String subject = "10%20Waves%20Detected";
         String body = "Someone%20waved%20at%20the%20sensor%2010%20times";
